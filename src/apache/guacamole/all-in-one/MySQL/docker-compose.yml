@@ -1,0 +1,47 @@
+version: '3.0'
+services:
+  guacamole_guacd:
+     container_name: guacamole_guacd
+     image: guacamole/guacd
+     ports:
+       - 4822:4822   # Host Port:Container Port
+     restart: always #no, always, on-failure, unless-stopped
+  
+  guacamole_mysql:
+     container_name: guacamole_mysql
+     image: mysql:8.0
+     environment:
+       MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+       MYSQL_DATABASE: guacamole
+       MYSQL_USER: guacamoleuser
+       MYSQL_PASSWORD: guaCa1Mole2021!
+     ports:
+       - 53306:3306   # Host Port:Container Port
+       - 53307:33060 # Host Port:Container Port
+     volumes:
+       - /data/guacamole/mysql_8_0:/var/lib/guacamole/mysql_8_0/
+     restart: always
+
+  guacamole_server:
+     container_name: guacamole_server
+     depends_on:
+       - guacamole_guacd
+       - guacamole_mysql
+     image: guacamole/guacamole
+     ports:
+       - 8080:8080   # Host Port:Container Port
+     command:
+       - |
+          /opt/guacamole/bin/initdb.sh --mysql > initdb.sql
+     environment:
+        GUACD_HOSTNAME: guacamole_guacd
+        GUACD_PORT: 4822
+        MYSQL_HOSTNAME: guacamole_mysql
+        MYSQL_PORT: 3306
+        MYSQL_DATABASE: guacamole
+        MYSQL_USER: guacamoleuser
+        MYSQL_PASSWORD: guaCa1Mole2021!
+     restart: always  #no, always, on-failure, unless-stopped
+
+volumes:
+    dbdata:
